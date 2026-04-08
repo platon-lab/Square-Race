@@ -387,12 +387,13 @@
     const BASE_GRENADE_COUNT = 1; 
     const WHOLE_APPLE_COUNT = 1; 
     const BITTEN_APPLE_COUNT = 1; 
-    const BASE_WALL_COUNT = 8; 
+    const BASE_WALL_COUNT = 2; 
     const SMALL_POTION_COUNT = 1; 
     const BIG_POTION_COUNT = 1;   
     const SHIELD_COUNT = 1; 
     
     const SPAWN_SKIP_CHANCE = 0.20; 
+    const WALL_SPAWN_SKIP_CHANCE = 0.65; 
 
     const BULLET_IMAGE = 'Bullet.png';
     const EXPLOSION_IMAGE = 'Explode.gif';
@@ -619,8 +620,11 @@
         walls = [];
         document.querySelectorAll('.wall-block').forEach(el => el.remove()); 
         if (mode === 'random') {
-             for (let i = 0; i < BASE_WALL_COUNT; i++) {
-                 walls.push(createWallElement(generateRandomWallPosition()));
+             if (Math.random() > WALL_SPAWN_SKIP_CHANCE) {
+                 const count = Math.random() > 0.5 ? 2 : 1;
+                 for (let i = 0; i < count; i++) {
+                     walls.push(createWallElement(generateRandomWallPosition()));
+                 }
              }
         } else if (mode === 'custom') {
             customLevelData.walls.forEach(data => {
@@ -761,7 +765,7 @@
             }
             
             players.forEach(p2 => {
-                if (!p2.alive || p1 === p2) return;
+                if (!p2.alive || p1 === p2 || p1.id >= p2.id) return;
                 if (checkCollision(p1, p2)) { handlePlayerCollision(p1, p2, true); }
             });
             
@@ -893,9 +897,12 @@
         
         players.forEach(p => {
             if (p.alive) {
-                const pCenter = { x: p.x + p.width / 2, y: p.y + p.height / 2 };
-                const distSq = distanceSquared(pCenter, explosionCenter);
-                if (Math.sqrt(distSq) < EXPLOSION_RADIUS / 2 + p.width / 2) {
+                const pCenterX = p.x + p.width / 2;
+                const pCenterY = p.y + p.height / 2;
+                const expCenterX = grenade.x + GRENADE_SIZE / 2;
+                const expCenterY = grenade.y + GRENADE_SIZE / 2;
+                const dist = Math.sqrt(Math.pow(pCenterX - expCenterX, 2) + Math.pow(pCenterY - expCenterY, 2));
+                if (dist < EXPLOSION_RADIUS / 2 + p.width / 2) {
                     if (p.isShielded) { deactivateShield(p); playSoundEffect('Shield.mp3'); } 
                     else { eliminatePlayer(p, grenade.shooter, true); }
                 }
@@ -903,14 +910,20 @@
         });
         
         for (let i = walls.length - 1; i >= 0; i--) {
-            const w = walls[i]; const wCenter = { x: w.x + w.width / 2, y: w.y + w.height / 2 };
-             if (Math.sqrt(distanceSquared(wCenter, explosionCenter)) < EXPLOSION_RADIUS / 2 + w.width / 2) {
+            const w = walls[i]; 
+            const wCX = w.x + w.width / 2; const wCY = w.y + w.height / 2;
+            const expCX = grenade.x + GRENADE_SIZE / 2; const expCY = grenade.y + GRENADE_SIZE / 2;
+            const dist = Math.sqrt(Math.pow(wCX - expCX, 2) + Math.pow(wCY - expCY, 2));
+             if (dist < EXPLOSION_RADIUS / 2 + w.width / 2) {
                  w.element.remove(); walls.splice(i, 1);
              }
         }
         for (let i = breakers.length - 1; i >= 0; i--) {
-            const b = breakers[i]; const bCenter = { x: b.x + b.width / 2, y: b.y + b.height / 2 };
-             if (Math.sqrt(distanceSquared(bCenter, explosionCenter)) < EXPLOSION_RADIUS / 2 + b.width / 2) {
+            const b = breakers[i]; 
+            const bCX = b.x + b.width / 2; const bCY = b.y + b.height / 2;
+            const expCX = grenade.x + GRENADE_SIZE / 2; const expCY = grenade.y + GRENADE_SIZE / 2;
+            const dist = Math.sqrt(Math.pow(bCX - expCX, 2) + Math.pow(bCY - expCY, 2));
+             if (dist < EXPLOSION_RADIUS / 2 + b.width / 2) {
                  b.element.remove(); breakers.splice(i, 1);
              }
         }
@@ -972,23 +985,47 @@
         player.element.classList.add('eliminated'); player.dx = 0; player.dy = 0; playSoundEffect('Death.mp3');
 
         if (eliminator && eliminator.alive && eliminator !== player) {
-            eliminator.dx *= -1.5; eliminator.dy *= -1.5;
-            setTimeout(() => { eliminator.dx /= -1.5; eliminator.dy /= -1.5; }, 500); 
+            const prevDx = eliminator.dx; const prevDy = eliminator.dy;
+            eliminator.dx *= 1.5; eliminator.dy *= 1.5;
+            setTimeout(() => { eliminator.dx = prevDx; eliminator.dy = prevDy; }, 500); 
         }
         checkGameOver();
     }
     
     function handlePlayerCollision(p1, p2, shouldPlaySound = false) {
+        // Swap velocities
         const tempDx = p1.dx; p1.dx = p2.dx; p2.dx = tempDx;
         const tempDy = p1.dy; p1.dy = p2.dy; p2.dy = tempDy;
         
         const center1 = { x: p1.x + p1.width / 2, y: p1.y + p1.height / 2 };
         const center2 = { x: p2.x + p2.width / 2, y: p2.y + p2.height / 2 };
-        const angle = Math.atan2(center2.y - center1.y, center2.x - center1.x);
-        const overlap = p1.width / 2 + p2.width / 2 - Math.sqrt(distanceSquared(p1, p2));
         
-        const moveX = Math.cos(angle) * (overlap / 2 + 1); const moveY = Math.sin(angle) * (overlap / 2 + 1);
-        p1.x -= moveX; p1.y -= moveY; p2.x += moveX; p2.y += moveY;
+        let angle = Math.atan2(center2.y - center1.y, center2.x - center1.x);
+        
+        // If centers are exactly the same, push in random direction
+        if (center1.x === center2.x && center1.y === center2.y) {
+            angle = Math.random() * Math.PI * 2;
+        }
+        
+        // Calculate overlap based on bounding boxes
+        const overlapX = (p1.width / 2 + p2.width / 2) - Math.abs(center1.x - center2.x);
+        const overlapY = (p1.height / 2 + p2.height / 2) - Math.abs(center1.y - center2.y);
+        const overlap = Math.min(overlapX, overlapY);
+        const separation = Math.max(overlap / 2 + 2, 3);
+        
+        const moveX = Math.cos(angle) * separation;
+        const moveY = Math.sin(angle) * separation;
+        
+        // Push apart and clamp to bounds
+        p1.x = Math.max(0, Math.min(p1.x - moveX, GAME_WIDTH - p1.width));
+        p1.y = Math.max(0, Math.min(p1.y - moveY, GAME_HEIGHT - p1.height));
+        p2.x = Math.max(0, Math.min(p2.x + moveX, GAME_WIDTH - p2.width));
+        p2.y = Math.max(0, Math.min(p2.y + moveY, GAME_HEIGHT - p2.height));
+        
+        // Ensure minimum speed after swap (prevents getting stuck at 0)
+        const minSpeed = 1;
+        if (Math.abs(p1.dx) < minSpeed && Math.abs(p1.dy) < minSpeed) { p1.dx = Math.cos(angle + Math.PI) * INITIAL_SPEED; p1.dy = Math.sin(angle + Math.PI) * INITIAL_SPEED; }
+        if (Math.abs(p2.dx) < minSpeed && Math.abs(p2.dy) < minSpeed) { p2.dx = Math.cos(angle) * INITIAL_SPEED; p2.dy = Math.sin(angle) * INITIAL_SPEED; }
         
         if (shouldPlaySound) { playSoundEffect('Bam.mp3'); }
         
