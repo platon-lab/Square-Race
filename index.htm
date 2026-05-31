@@ -273,7 +273,8 @@
         }
 
         .heroes-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0;
+            max-height: 50vh; overflow-y: auto; padding: 5px;
         }
         
         .hero-option {
@@ -291,8 +292,8 @@
         #custom-menu-cancel { background-color: #ff3366; color: #fff; border: 2px solid #ff3366; }
 
         @media (max-width: 600px) {
-            .heroes-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
-            .hero-option { width: 70px; height: 70px; }
+            .heroes-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .hero-option { width: 65px; height: 65px; }
         }
 
     </style>
@@ -354,7 +355,7 @@
     const SHIELD_DURATION = 20000; 
     const INITIAL_SPEED = 2;
     const PROXIMITY_RADIUS = 200; 
-    let nextPlayerId = 7; 
+    let nextPlayerId = 21; 
     let isFullscreenMode = false; 
 
     const MAX_PISTOL_SHOTS = 5;
@@ -364,6 +365,8 @@
         KNIFE: 'Knife.png', 
         PISTOL: 'Gun.png', 
         GRENADE: 'Granata.png',
+        SWORD: 'Sword.png',
+        LASER: 'Laser.png',
         WHOLE_APPLE: 'Apple.png', 
         BITTEN_APPLE: 'Apple 2.png', 
         FINISH_LINE: 'Finish.png',
@@ -382,18 +385,20 @@
     const BIG_POTION_TYPE = WEAPON_TYPES.BIG_POTION;     
     const SHIELD_TYPE = WEAPON_TYPES.SHIELD; 
     
-    const BASE_KNIFE_COUNT = 1;
-    const BASE_PISTOL_COUNT = 1; 
-    const BASE_GRENADE_COUNT = 1; 
-    const WHOLE_APPLE_COUNT = 1; 
-    const BITTEN_APPLE_COUNT = 1; 
-    const BASE_WALL_COUNT = 2; 
-    const SMALL_POTION_COUNT = 1; 
-    const BIG_POTION_COUNT = 1;   
-    const SHIELD_COUNT = 1; 
+    const BASE_KNIFE_COUNT = 3;
+    const BASE_PISTOL_COUNT = 3; 
+    const BASE_GRENADE_COUNT = 3; 
+    const BASE_SWORD_COUNT = 2;
+    const BASE_LASER_COUNT = 2;
+    const WHOLE_APPLE_COUNT = 2; 
+    const BITTEN_APPLE_COUNT = 2; 
+    const BASE_WALL_COUNT = 4; 
+    const SMALL_POTION_COUNT = 2; 
+    const BIG_POTION_COUNT = 2;   
+    const SHIELD_COUNT = 3; 
     
-    const SPAWN_SKIP_CHANCE = 0.20; 
-    const WALL_SPAWN_SKIP_CHANCE = 0.65; 
+    const SPAWN_SKIP_CHANCE = 0.10; 
+    const WALL_SPAWN_SKIP_CHANCE = 0.40; 
 
     const BULLET_IMAGE = 'Bullet.png';
     const EXPLOSION_IMAGE = 'Explode.gif';
@@ -421,14 +426,28 @@
     let customLevelData = { players: [], weapons: [], walls: [], breakers: [] }; 
     let placedElements = []; 
 
-    // НОВІ ГЕРОЇ ПЛАТОНА
+    // ВСІ 20 ГЕРОЇВ ПЛАТОНА
     const PET_HEROES = [
         { id: 1, name: 'Tito', image: 'Tito.png', hex: '#ff3366' },
         { id: 2, name: 'Smartik', image: 'Smartik.png', hex: '#33ff99' },
         { id: 3, name: 'Junior', image: 'Junior.png', hex: '#3399ff' },
         { id: 4, name: 'Fil', image: 'Fil.png', hex: '#ffff66' },
         { id: 5, name: 'Milka', image: 'Milka.png', hex: '#ff9933' },
-        { id: 6, name: 'Bark', image: 'Bark.png', hex: '#9933ff' }
+        { id: 6, name: 'Bark', image: 'Bark.png', hex: '#9933ff' },
+        { id: 7, name: 'Persik', image: 'Persik.png', hex: '#ffaa66' },
+        { id: 8, name: 'Spike', image: 'Spike.png', hex: '#555555' },
+        { id: 9, name: 'Alyonka', image: 'Alyonka.png', hex: '#ff66cc' },
+        { id: 10, name: 'Lilu', image: 'Lilu.png', hex: '#cc66ff' },
+        { id: 11, name: 'Manya', image: 'Manya.png', hex: '#99ff33' },
+        { id: 12, name: 'Liza', image: 'Liza.png', hex: '#ff33cc' },
+        { id: 13, name: 'Grivna', image: 'Grivna.png', hex: '#33ffcc' },
+        { id: 14, name: 'Ben', image: 'Ben.png', hex: '#8b4513' },
+        { id: 15, name: 'Goldi', image: 'Goldi.png', hex: '#ffd700' },
+        { id: 16, name: 'Raf', image: 'Raf.png', hex: '#4682b4' },
+        { id: 17, name: 'Veles', image: 'Veles.png', hex: '#8a2be2' },
+        { id: 18, name: 'Masha', image: 'Masha.png', hex: '#ff1493' },
+        { id: 19, name: 'Brilliantik', image: 'Brilliantik.png', hex: '#00ffff' },
+        { id: 20, name: 'Richik', image: 'Richik.png', hex: '#d2691e' }
     ];
     
     const ITEM_TOOLS_DATA_BASE = [
@@ -436,6 +455,8 @@
         { type: 'weapon', image: WEAPON_TYPES.KNIFE, dataName: 'Knife' },
         { type: 'weapon', image: WEAPON_TYPES.PISTOL, dataName: 'Gun' },
         { type: 'weapon', image: WEAPON_TYPES.GRENADE, dataName: 'Granata' },
+        { type: 'weapon', image: WEAPON_TYPES.SWORD, dataName: 'Sword' },
+        { type: 'weapon', image: WEAPON_TYPES.LASER, dataName: 'Laser' },
         { type: 'item', image: WHOLE_APPLE_TYPE, dataName: 'WholeApple' },
         { type: 'item', image: BITTEN_APPLE_TYPE, dataName: 'BittenApple' },
         { type: 'item', image: SMALL_POTION_TYPE, dataName: 'SmallPotion' }, 
@@ -538,7 +559,7 @@
                 players.push(newPlayer);
                 tempPlayers.push(newPlayer);
             });
-            nextPlayerId = 7; 
+            nextPlayerId = 21; 
 
         } else if (mode === 'custom') {
             customLevelData.players.forEach((data, index) => {
@@ -621,7 +642,7 @@
         document.querySelectorAll('.wall-block').forEach(el => el.remove()); 
         if (mode === 'random') {
              if (Math.random() > WALL_SPAWN_SKIP_CHANCE) {
-                 const count = Math.random() > 0.5 ? 2 : 1;
+                 const count = Math.random() > 0.5 ? 3 : 2;
                  for (let i = 0; i < count; i++) {
                      walls.push(createWallElement(generateRandomWallPosition()));
                  }
@@ -683,6 +704,8 @@
             addItemsWithChance(WEAPON_TYPES.KNIFE, BASE_KNIFE_COUNT);
             addItemsWithChance(WEAPON_TYPES.PISTOL, BASE_PISTOL_COUNT);
             addItemsWithChance(WEAPON_TYPES.GRENADE, BASE_GRENADE_COUNT);
+            addItemsWithChance(WEAPON_TYPES.SWORD, BASE_SWORD_COUNT);
+            addItemsWithChance(WEAPON_TYPES.LASER, BASE_LASER_COUNT);
             addItemsWithChance(WHOLE_APPLE_TYPE, WHOLE_APPLE_COUNT);
             addItemsWithChance(BITTEN_APPLE_TYPE, BITTEN_APPLE_COUNT);
             addItemsWithChance(SMALL_POTION_TYPE, SMALL_POTION_COUNT); 
@@ -752,7 +775,7 @@
             });
 
             if (p1.weapon && p1.weapon.type === WEAPON_TYPES.GRENADE) { handleGrenadeLaunch(p1); }
-            if (p1.weapon && p1.weapon.type === WEAPON_TYPES.PISTOL && p1.weapon.shots > 0) {
+            if (p1.weapon && (p1.weapon.type === WEAPON_TYPES.PISTOL || p1.weapon.type === WEAPON_TYPES.LASER) && p1.weapon.shots > 0) {
                 const aliveEnemies = players.filter(p => p.alive && p !== p1);
                 if (aliveEnemies.length > 0) {
                     let closestEnemy = null; let minDistance = Infinity;
@@ -959,7 +982,10 @@
     function handleWeaponPickup(player, weapon) {
         if (player.weapon) { dropWeapon(player, true); }
         player.weapon = { type: weapon.type };
-        if (weapon.type === WEAPON_TYPES.PISTOL) { player.weapon.shots = MAX_PISTOL_SHOTS; player._lastShot = Date.now() - SHOT_DELAY; }
+        if (weapon.type === WEAPON_TYPES.PISTOL || weapon.type === WEAPON_TYPES.LASER) { 
+            player.weapon.shots = MAX_PISTOL_SHOTS; 
+            player._lastShot = Date.now() - SHOT_DELAY; 
+        }
 
         const weaponIcon = document.createElement('div'); weaponIcon.className = 'player-weapon-icon';
         const img = document.createElement('img'); img.src = weapon.type; weaponIcon.appendChild(img);
@@ -1002,12 +1028,10 @@
         
         let angle = Math.atan2(center2.y - center1.y, center2.x - center1.x);
         
-        // If centers are exactly the same, push in random direction
         if (center1.x === center2.x && center1.y === center2.y) {
             angle = Math.random() * Math.PI * 2;
         }
         
-        // Calculate overlap based on bounding boxes
         const overlapX = (p1.width / 2 + p2.width / 2) - Math.abs(center1.x - center2.x);
         const overlapY = (p1.height / 2 + p2.height / 2) - Math.abs(center1.y - center2.y);
         const overlap = Math.min(overlapX, overlapY);
@@ -1016,23 +1040,22 @@
         const moveX = Math.cos(angle) * separation;
         const moveY = Math.sin(angle) * separation;
         
-        // Push apart and clamp to bounds
         p1.x = Math.max(0, Math.min(p1.x - moveX, GAME_WIDTH - p1.width));
         p1.y = Math.max(0, Math.min(p1.y - moveY, GAME_HEIGHT - p1.height));
         p2.x = Math.max(0, Math.min(p2.x + moveX, GAME_WIDTH - p2.width));
         p2.y = Math.max(0, Math.min(p2.y + moveY, GAME_HEIGHT - p2.height));
         
-        // Ensure minimum speed after swap (prevents getting stuck at 0)
         const minSpeed = 1;
         if (Math.abs(p1.dx) < minSpeed && Math.abs(p1.dy) < minSpeed) { p1.dx = Math.cos(angle + Math.PI) * INITIAL_SPEED; p1.dy = Math.sin(angle + Math.PI) * INITIAL_SPEED; }
         if (Math.abs(p2.dx) < minSpeed && Math.abs(p2.dy) < minSpeed) { p2.dx = Math.cos(angle) * INITIAL_SPEED; p2.dy = Math.sin(angle) * INITIAL_SPEED; }
         
         if (shouldPlaySound) { playSoundEffect('Bam.mp3'); }
         
-        if (p1.weapon && p1.weapon.type === WEAPON_TYPES.KNIFE) {
+        // Перевірка для Нової зброї (Sword) та класичного Ножа
+        if (p1.weapon && (p1.weapon.type === WEAPON_TYPES.KNIFE || p1.weapon.type === WEAPON_TYPES.SWORD)) {
              if (p2.isShielded) { deactivateShield(p2); playSoundEffect('Shield.mp3'); } 
              else { eliminatePlayer(p2, p1); dropWeapon(p1, true); }
-        } else if (p2.weapon && p2.weapon.type === WEAPON_TYPES.KNIFE) {
+        } else if (p2.weapon && (p2.weapon.type === WEAPON_TYPES.KNIFE || p2.weapon.type === WEAPON_TYPES.SWORD)) {
              if (p1.isShielded) { deactivateShield(p1); playSoundEffect('Shield.mp3'); } 
              else { eliminatePlayer(p1, p2); dropWeapon(p2, true); }
         }
@@ -1077,7 +1100,10 @@
     }
     
     function createBullet(shooter, target) {
-        const b = document.createElement('img'); b.src = BULLET_IMAGE; b.className = 'bullet';
+        const b = document.createElement('img'); 
+        // Візуалізація для Лазера або кулі
+        b.src = shooter.weapon.type === WEAPON_TYPES.LASER ? WEAPON_TYPES.LASER : BULLET_IMAGE; 
+        b.className = 'bullet';
         b.style.width = `${BULLET_SIZE}px`; b.style.height = `${BULLET_SIZE}px`; container.appendChild(b);
 
         const startX = shooter.x + shooter.width / 2 - BULLET_SIZE / 2; const startY = shooter.y + shooter.height / 2 - BULLET_SIZE / 2;
@@ -1097,8 +1123,8 @@
         
         if (original.weapon) {
              const droppedWeaponType = original.weapon.type; let weaponTypeData;
-             if (droppedWeaponType === WEAPON_TYPES.PISTOL) { weaponTypeData = { type: WEAPON_TYPES.PISTOL, shots: MAX_PISTOL_SHOTS }; } 
-             else if (droppedWeaponType === WEAPON_TYPES.KNIFE) { weaponTypeData = { type: WEAPON_TYPES.KNIFE }; } 
+             if (droppedWeaponType === WEAPON_TYPES.PISTOL || droppedWeaponType === WEAPON_TYPES.LASER) { weaponTypeData = { type: droppedWeaponType, shots: MAX_PISTOL_SHOTS }; } 
+             else if (droppedWeaponType === WEAPON_TYPES.KNIFE || droppedWeaponType === WEAPON_TYPES.SWORD) { weaponTypeData = { type: droppedWeaponType }; } 
              else if (droppedWeaponType === WEAPON_TYPES.GRENADE) { weaponTypeData = { type: WEAPON_TYPES.GRENADE }; }
             cloneObj.weapon = weaponTypeData;
             const weaponIcon = document.createElement('div'); weaponIcon.className = 'player-weapon-icon';
@@ -1186,7 +1212,6 @@
     
     fullscreenToggleButton.addEventListener('click', () => { setFullscreenMode(!isFullscreenMode); });
 
-    // Підтримка подвійного тапу / кліку для фулскріну
     let lastTapTime = 0;
     editorContainer.addEventListener('touchend', (e) => {
         if (e.target.closest('#editor-toolbar') || e.target.closest('.editor-placed-item')) return;
@@ -1257,8 +1282,8 @@
         
         if (dataName === 'Player') {
             type = 'player';
-            if (placedElements.filter(el => el.getAttribute('data-type') === 'player').length >= 6 && !initialData.isLoaded) {
-                 alert("Ви не можете мати більше 6-х гравців."); return null; 
+            if (placedElements.filter(el => el.getAttribute('data-type') === 'player').length >= 20 && !initialData.isLoaded) {
+                 alert("Ви не можете мати більше 20-х гравців."); return null; 
             }
             
             const heroName = initialData.name || selectedHero.name;
@@ -1401,8 +1426,8 @@
     }
     
     function showCustomizationMenu() {
-        if (placedElements.filter(el => el.getAttribute('data-type') === 'player').length >= 6) {
-             alert("Ви не можете мати більше 6-х гравців."); return;
+        if (placedElements.filter(el => el.getAttribute('data-type') === 'player').length >= 20) {
+             alert("Ви не можете мати більше 20-х гравців."); return;
         }
         playerCustomizationMenu.style.display = 'flex';
     }
