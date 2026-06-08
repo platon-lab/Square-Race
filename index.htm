@@ -355,7 +355,7 @@
     const SHIELD_DURATION = 20000; 
     const INITIAL_SPEED = 2;
     const PROXIMITY_RADIUS = 200; 
-    let nextPlayerId = 21; 
+    let nextPlayerId = 23; 
     let isFullscreenMode = false; 
 
     const MAX_PISTOL_SHOTS = 5;
@@ -426,7 +426,7 @@
     let customLevelData = { players: [], weapons: [], walls: [], breakers: [] }; 
     let placedElements = []; 
 
-    // ВСІ 20 ГЕРОЇВ ПЛАТОНА
+    // ВСІ 22 ГЕРОЇ ПЛАТОНА
     const PET_HEROES = [
         { id: 1, name: 'Tito', image: 'Tito.png', hex: '#ff3366' },
         { id: 2, name: 'Smartik', image: 'Smartik.png', hex: '#33ff99' },
@@ -447,7 +447,9 @@
         { id: 17, name: 'Veles', image: 'Veles.png', hex: '#8a2be2' },
         { id: 18, name: 'Masha', image: 'Masha.png', hex: '#ff1493' },
         { id: 19, name: 'Brilliantik', image: 'Brilliantik.png', hex: '#00ffff' },
-        { id: 20, name: 'Richik', image: 'Richik.png', hex: '#d2691e' }
+        { id: 20, name: 'Richik', image: 'Richik.png', hex: '#d2691e' },
+        { id: 21, name: 'Shunya', image: 'Shunya.png', hex: '#ff5500' },
+        { id: 22, name: 'Baks', image: 'Baks.png', hex: '#00ff55' }
     ];
     
     const ITEM_TOOLS_DATA_BASE = [
@@ -559,7 +561,7 @@
                 players.push(newPlayer);
                 tempPlayers.push(newPlayer);
             });
-            nextPlayerId = 21; 
+            nextPlayerId = 23; 
 
         } else if (mode === 'custom') {
             customLevelData.players.forEach((data, index) => {
@@ -688,7 +690,7 @@
         el.style.top = `${data.y}px`;
         el.style.fontSize = `${data.size / 2}px`;
         container.appendChild(el);
-        return { x: data.x, y: data.y, width: data.size, height: data.size, count: data.count, element: el, type: 'breaker' }; 
+        return { x: position.x, y: position.y, width: data.size, height: data.size, count: data.count, element: el, type: 'breaker' }; 
     }
 
     function initializeWeapons(mode) {
@@ -1282,8 +1284,8 @@
         
         if (dataName === 'Player') {
             type = 'player';
-            if (placedElements.filter(el => el.getAttribute('data-type') === 'player').length >= 20 && !initialData.isLoaded) {
-                 alert("Ви не можете мати більше 20-х гравців."); return null; 
+            if (placedElements.filter(el => el.getAttribute('data-type') === 'player').length >= 22 && !initialData.isLoaded) {
+                 alert("Ви не можете мати більше 22-х гравців."); return null; 
             }
             
             const heroName = initialData.name || selectedHero.name;
@@ -1426,8 +1428,8 @@
     }
     
     function showCustomizationMenu() {
-        if (placedElements.filter(el => el.getAttribute('data-type') === 'player').length >= 20) {
-             alert("Ви не можете мати більше 20-х гравців."); return;
+        if (placedElements.filter(el => el.getAttribute('data-type') === 'player').length >= 22) {
+             alert("Ви не можете мати більше 22-х гравців."); return;
         }
         playerCustomizationMenu.style.display = 'flex';
     }
